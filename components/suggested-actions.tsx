@@ -18,9 +18,9 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
       action: 'How to perform a schema diff',
     },
     {
-      title: 'How to build a transformer based predictor',
-      label: `for a time series`,
-      action: `How to build a transformer based predictor for a time series`,
+      title: 'How to build',
+      label: `a transformer based predictor`,
+      action: `How to build a transformer based predictor`,
     },
   ];
 
