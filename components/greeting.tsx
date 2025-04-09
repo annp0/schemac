@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export const Greeting = () => {
   return (
@@ -6,6 +7,7 @@ export const Greeting = () => {
       key="overview"
       className="max-w-3xl mx-auto md:mt-20 px-8 size-full flex flex-col justify-center"
     >
+      <Image src='/images/logo.svg' className="size-20 dark:invert" alt="Logo" width={80} height={80} />
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -13,7 +15,7 @@ export const Greeting = () => {
         transition={{ delay: 0.5 }}
         className="text-2xl font-semibold"
       >
-        Hello there!
+        Welcome to Schemac!
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: 10 }}

@@ -7,6 +7,7 @@ import { PlusIcon } from '@/components/icons';
 import { SidebarHistory } from '@/components/sidebar-history';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import {
   Sidebar,
   SidebarContent,
@@ -34,8 +35,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               }}
               className="flex flex-row gap-3 items-center"
             >
-              <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
-                Chatbot
+              <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer flex items-center">
+                <Image src="images/logo.svg" alt="Logo" className='dark:invert' width={25} height={25} />
+                Schemac
               </span>
             </Link>
             <Tooltip>
