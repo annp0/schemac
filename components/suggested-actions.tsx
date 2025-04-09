@@ -11,7 +11,18 @@ interface SuggestedActionsProps {
 }
 
 function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
-  const suggestedActions:string[] = [];
+  const suggestedActions = [
+    {
+      title: 'How to perform',
+      label: 'a schema diff',
+      action: 'How to perform a schema diff',
+    },
+    {
+      title: 'How to build a transformer based predictor',
+      label: `for a time series`,
+      action: `How to build a transformer based predictor for a time series`,
+    },
+  ];
 
   return (
     <div
