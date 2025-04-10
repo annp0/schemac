@@ -150,3 +150,16 @@ export const suggestion = pgTable(
 );
 
 export type Suggestion = InferSelectModel<typeof suggestion>;
+
+export const userSchema = pgTable('UserSchema', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  name: varchar('name', { length: 64 }).notNull(),
+  description: text('description'),
+  userId: uuid('userId')
+    .notNull()
+    .references(() => user.id),
+  content: json('content').notNull(),
+  createdAt: timestamp('createdAt').notNull(),
+});
+
+export type UserSchema = InferSelectModel<typeof userSchema>;
