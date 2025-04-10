@@ -36,7 +36,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               className="flex flex-row gap-3 items-center"
             >
               <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer flex items-center">
-                <Image src="images/logo.svg" alt="Logo" className='dark:invert' width={25} height={25} />
+                <Image src="/images/logo.png" alt="Logo" className='dark:invert' width={25} height={25} />
                 Schemac
               </span>
             </Link>
