@@ -15,6 +15,16 @@ export const authConfig = {
       const isOnChat = nextUrl.pathname.startsWith('/');
       const isOnRegister = nextUrl.pathname.startsWith('/register');
       const isOnLogin = nextUrl.pathname.startsWith('/login');
+      const isPublicAsset =
+        nextUrl.pathname.startsWith('/_next') ||
+        nextUrl.pathname.startsWith('/images') ||
+        nextUrl.pathname.startsWith('/assets') ||
+        nextUrl.pathname.startsWith('/favicon.ico') ||
+        nextUrl.pathname.startsWith('/api/public');
+
+      if (isPublicAsset) {
+        return true;
+      }
 
       if (isLoggedIn && (isOnLogin || isOnRegister)) {
         return Response.redirect(new URL('/', nextUrl as unknown as URL));
