@@ -12,8 +12,8 @@ const FileSchema = z.object({
       message: 'File size should be less than 5MB',
     })
     // Update the file type based on the kind of files you want to accept
-    .refine((file) => ['image/jpeg', 'image/png'].includes(file.type), {
-      message: 'File type should be JPEG or PNG',
+    .refine((file) => ['text/plain', 'text/markdown', 'text/csv', 'application/pdf'].includes(file.type), {
+      message: 'File type should be text (TXT, MD, CSV) or PDF',
     }),
 });
 
@@ -54,7 +54,6 @@ export async function POST(request: Request) {
       const data = await put(`${filename}`, fileBuffer, {
         access: 'public',
       });
-
       return NextResponse.json(data);
     } catch (error) {
       return NextResponse.json({ error: 'Upload failed' }, { status: 500 });

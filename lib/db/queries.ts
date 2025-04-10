@@ -16,6 +16,9 @@ import {
   vote,
   type DBMessage,
   Chat,
+  userSchema,
+  type UserSchema,
+  SchemaField,
 } from './schema';
 import { ArtifactKind } from '@/components/artifact';
 
@@ -402,6 +405,91 @@ export async function updateChatVisiblityById({
     return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
   } catch (error) {
     console.error('Failed to update chat visibility in database');
+    throw error;
+  }
+}
+
+export async function createSchema({
+  name,
+  description,
+  userId,
+  content,
+}: {
+  name: string;
+  description?: string;
+  userId: string;
+  content: SchemaField[]; // JSON schema content
+}) {
+  try {
+    return await db.insert(userSchema).values({
+      name,
+      description,
+      userId,
+      content,
+      createdAt: new Date(),
+    });
+  } catch (error) {
+    console.error('Failed to create schema in database');
+    throw error;
+  }
+}
+
+export async function getSchemasByUserId({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select()
+      .from(userSchema)
+      .where(eq(userSchema.userId, userId))
+      .orderBy(desc(userSchema.createdAt));
+  } catch (error) {
+    console.error('Failed to get schemas by user id from database');
+    throw error;
+  }
+}
+
+export async function getSchemaById({ id }: { id: string }) {
+  try {
+    const [selectedSchema] = await db
+      .select()
+      .from(userSchema)
+      .where(eq(userSchema.id, id))
+      .limit(1);
+    return selectedSchema;
+  } catch (error) {
+    console.error('Failed to get schema by id from database');
+    throw error;
+  }
+}
+
+export async function updateSchema({
+  id,
+  name,
+  description,
+  content,
+}: {
+  id: string;
+  name?: string;
+  description?: string;
+  content?: SchemaField[];
+}) {
+  try {
+    const updates: Partial<UserSchema> = {};
+    if (name) updates.name = name;
+    if (description !== undefined) updates.description = description;
+    if (content) updates.content = content;
+
+    return await db.update(userSchema).set(updates).where(eq(userSchema.id, id));
+  } catch (error) {
+    console.error('Failed to update schema in database');
+    throw error;
+  }
+}
+
+export async function deleteSchemaById({ id }: { id: string }) {
+  try {
+    return await db.delete(userSchema).where(eq(userSchema.id, id));
+  } catch (error) {
+    console.error('Failed to delete schema from database');
     throw error;
   }
 }

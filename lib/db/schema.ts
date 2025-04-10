@@ -162,4 +162,13 @@ export const userSchema = pgTable('UserSchema', {
   createdAt: timestamp('createdAt').notNull(),
 });
 
-export type UserSchema = InferSelectModel<typeof userSchema>;
+export interface SchemaField {
+  name: string;
+  type: string;
+  description?: string;
+  exampleValues?: string[];
+}
+
+export type UserSchema = InferSelectModel<typeof userSchema> & {
+  content: SchemaField[];
+};

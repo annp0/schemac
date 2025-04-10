@@ -19,12 +19,11 @@ import {
   getTrailingMessageId,
 } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
-import { createDocument } from '@/lib/ai/tools/create-document';
-import { updateDocument } from '@/lib/ai/tools/update-document';
-import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
-import { getWeather } from '@/lib/ai/tools/get-weather';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
+import { Document } from "langchain/document";
+import { TextLoader } from "langchain/document_loaders/fs/text";
+import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf'
 
 export const maxDuration = 60;
 
@@ -79,12 +78,62 @@ export async function POST(request: Request) {
       ],
     });
 
+    console.log('here!1')
+
+    let documentContent = '';
+
+    const newMessage = messages[messages.length - 1];
+    if (newMessage.experimental_attachments && newMessage.experimental_attachments.length > 0) {
+
+      console.log('fire!')
+
+      const attachments = newMessage.experimental_attachments;
+      const resPromises = attachments.map((attachment) => fetch(attachment.url));
+      const responses = await Promise.all(resPromises);
+
+      // Filter PDFs
+      const bufPromises = responses.filter((response) => {
+        return response.headers.get('content-type') === 'application/pdf';
+      }).map((response) => response.arrayBuffer());
+
+      // Filter ALL text files (not just plain text)
+      const txtPromises = responses.filter((response) => {
+        const contentType = response.headers.get('content-type');
+        return contentType?.startsWith('text/'); // Accept any text/* MIME type
+      }).map((response) => response.text());
+
+      const buffers = await Promise.all(bufPromises);
+      const textContents = await Promise.all(txtPromises);
+      const blobs = buffers.map((buffer) => new Blob([buffer]));
+
+      // Now process the extracted content and enhance your system prompt
+      if (textContents.length > 0) {
+        documentContent += textContents.join('\n\n');
+      }
+
+      if (blobs.length > 0) {
+        const docPromises = blobs.map((blob) => new PDFLoader(blob).load())
+        const docs = await Promise.all(docPromises);
+        const text = docs.map((doc) => doc.map((d: Document) => d.pageContent).join('\n\n')).join('\n\n');
+        documentContent += text;
+      }
+    }
+
+    console.log('here!1')
+
+    const enhancedSystemPrompt = systemPrompt({
+      selectedChatModel,
+      documentContent // Pass the extracted content to your system prompt
+    });
+
+    console.log('here!1')
+
     return createDataStreamResponse({
       execute: (dataStream) => {
         console.log(myProvider.languageModel(selectedChatModel))
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel }),
+          system: enhancedSystemPrompt,
           messages,
           maxSteps: 5,
           experimental_transform: smoothStream({ chunking: 'word' }),
