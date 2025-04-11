@@ -5,6 +5,8 @@ import { and, asc, desc, eq, gt, gte, inArray, lt, SQL } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
+import { del } from '@vercel/blob';
+
 import {
   user,
   chat,
@@ -19,6 +21,8 @@ import {
   userSchema,
   type UserSchema,
   SchemaField,
+  attachedText,
+  type AttachedText,
 } from './schema';
 import { ArtifactKind } from '@/components/artifact';
 
@@ -77,6 +81,7 @@ export async function deleteChatById({ id }: { id: string }) {
   try {
     await db.delete(vote).where(eq(vote.chatId, id));
     await db.delete(message).where(eq(message.chatId, id));
+    await db.delete(attachedText).where(eq(attachedText.chatId, id));
 
     return await db.delete(chat).where(eq(chat.id, id));
   } catch (error) {
@@ -490,6 +495,67 @@ export async function deleteSchemaById({ id }: { id: string }) {
     return await db.delete(userSchema).where(eq(userSchema.id, id));
   } catch (error) {
     console.error('Failed to delete schema from database');
+    throw error;
+  }
+}
+
+export async function updateOrCreateAttachedText({
+  chatId,
+  content,
+}: {
+  chatId: string;
+  content: string;
+}) {
+  try {
+    const existingAttachedTexts = await db
+      .select()
+      .from(attachedText)
+      .where(eq(attachedText.chatId, chatId))
+      .orderBy(desc(attachedText.createdAt))
+      .limit(1);
+
+    if (existingAttachedTexts.length > 0) {
+      // Update existing record by appending new content
+      const existingRecord = existingAttachedTexts[0];
+      return await db
+        .update(attachedText)
+        .set({
+          content: existingRecord.content + '\n\n' + content,
+          createdAt: new Date() // Update timestamp to show it was modified
+        })
+        .where(eq(attachedText.id, existingRecord.id));
+    } else {
+      // Create new record
+      return await db.insert(attachedText).values({
+        chatId,
+        content,
+        createdAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.error('Failed to update or create attached text in database');
+    throw error;
+  }
+}
+
+export async function getAttachedTextByChatId({ chatId }: { chatId: string }) {
+  try {
+    return await db
+      .select()
+      .from(attachedText)
+      .where(eq(attachedText.chatId, chatId))
+      .orderBy(asc(attachedText.createdAt));
+  } catch (error) {
+    console.error('Failed to get attached text by chat id from database');
+    throw error;
+  }
+}
+
+export async function deleteAttachedTextById({ id }: { id: string }) {
+  try {
+    return await db.delete(attachedText).where(eq(attachedText.id, id));
+  } catch (error) {
+    console.error('Failed to delete attached text by id from database');
     throw error;
   }
 }

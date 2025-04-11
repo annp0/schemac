@@ -31,6 +31,17 @@ export const chat = pgTable('Chat', {
     .default('private'),
 });
 
+export const attachedText = pgTable('AttachedText', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  chatId: uuid('chatId')
+    .notNull()
+    .references(() => chat.id),
+  content: text('content').notNull(),
+  createdAt: timestamp('createdAt').notNull(),
+});
+
+export type AttachedText = InferSelectModel<typeof attachedText>;
+
 export type Chat = InferSelectModel<typeof chat>;
 
 // DEPRECATED: The following schema is deprecated and will be removed in the future.

@@ -12,6 +12,8 @@ import {
   getChatById,
   saveChat,
   saveMessages,
+  updateOrCreateAttachedText,
+  getAttachedTextByChatId,
 } from '@/lib/db/queries';
 import {
   generateUUID,
@@ -78,14 +80,10 @@ export async function POST(request: Request) {
       ],
     });
 
-    console.log('here!1')
-
     let documentContent = '';
 
     const newMessage = messages[messages.length - 1];
     if (newMessage.experimental_attachments && newMessage.experimental_attachments.length > 0) {
-
-      console.log('fire!')
 
       const attachments = newMessage.experimental_attachments;
       const resPromises = attachments.map((attachment) => fetch(attachment.url));
@@ -117,16 +115,24 @@ export async function POST(request: Request) {
         const text = docs.map((doc) => doc.map((d: Document) => d.pageContent).join('\n\n')).join('\n\n');
         documentContent += text;
       }
+
+      await updateOrCreateAttachedText({
+        chatId: id,
+        content: documentContent,
+      });
     }
 
-    console.log('here!1')
+    const attachedTexts = await getAttachedTextByChatId({ chatId: id });
+
+    // Combine all attached text content for the system prompt
+    const completeDocumentContent = attachedTexts
+      .map(text => text.content)
+      .join('\n\n');
 
     const enhancedSystemPrompt = systemPrompt({
       selectedChatModel,
-      documentContent // Pass the extracted content to your system prompt
+      documentContent: completeDocumentContent // Pass the extracted content to your system prompt
     });
-
-    console.log('here!1')
 
     return createDataStreamResponse({
       execute: (dataStream) => {
