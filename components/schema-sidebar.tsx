@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import type { User } from 'next-auth';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   FileIcon,
@@ -21,37 +21,28 @@ import type { UserSchema } from '@/lib/db/schema';
 import { SettingsIcon, Database } from 'lucide-react';
 import { SchemaItem } from './schema-item';
 import { useSchemaSelection } from './schema-provider';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/utils';
 
 export function SidebarSchemas({ user }: { user: User | undefined }) {
   const router = useRouter();
   const { id } = useParams();
   const { setOpenMobile } = useSidebar();
-  const [schemas, setSchemas] = useState<UserSchema[]>([]);
-  const [loading, setLoading] = useState(true);
   const { toggleSchemaSelection, isSchemaSelected } = useSchemaSelection();
-
-  useEffect(() => {
-    const fetchSchemas = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        const response = await fetch('/api/schema');
-        if (response.ok) {
-          const data = await response.json();
-          setSchemas(data);
-        }
-      } catch (error) {
-        console.error('Error fetching schemas:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSchemas();
-  }, [user]);
+  
+  // Replace useEffect+fetch with useSWR
+  const { 
+    data: schemas = [], 
+    isLoading,
+    mutate 
+  } = useSWR<UserSchema[]>(
+    user ? '/api/schema' : null,
+    fetcher,
+    {
+      fallbackData: [],
+      revalidateOnMount: true
+    }
+  );
 
   const handleDelete = async (schemaId: string) => {
     const deletePromise = fetch(`/api/schema?id=${schemaId}`, {
@@ -61,8 +52,10 @@ export function SidebarSchemas({ user }: { user: User | undefined }) {
     toast.promise(deletePromise, {
       loading: 'Deleting schema...',
       success: () => {
-        setSchemas((prevSchemas) => 
-          prevSchemas.filter((schema) => schema.id !== schemaId)
+        // Use mutate to update the cache instead of setState
+        mutate(
+          schemas.filter((schema) => schema.id !== schemaId),
+          false // Set to false to avoid revalidation after mutation
         );
         return 'Schema deleted successfully';
       },
@@ -88,7 +81,7 @@ export function SidebarSchemas({ user }: { user: User | undefined }) {
     );
   }
 
-  if (loading) {
+  if (isLoading) {
     // Unchanged loading state
     return (
       <SidebarGroup>
