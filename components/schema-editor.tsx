@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { UserSchema } from '@/lib/db/schema';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Database, Save, Trash, Plus, Table, File } from 'lucide-react';
+import { Database, Save, Trash, Plus, Table, File, X } from 'lucide-react';
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { useSidebar } from './ui/sidebar';
 import { useWindowSize } from 'usehooks-ts';
@@ -29,10 +29,12 @@ interface DocText {
 
 export function SchemaEditor({
   initialSchema,
-  user
+  user,
+  isNew = false
 }: {
   initialSchema: UserSchema;
   user: User;
+  isNew?: boolean;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -46,6 +48,10 @@ export function SchemaEditor({
     Array.isArray(initialSchema.docText) ? initialSchema.docText : []
   );
 
+  const handleCancel = useCallback(() => {
+    router.push('/schema/manage');
+  }, [router]);
+
   const handleUpdateSchema = async () => {
     if (!schema.name.trim()) {
       toast.error('Schema name is required');
@@ -55,7 +61,6 @@ export function SchemaEditor({
     setIsSubmitting(true);
 
     try {
-      // Sanitize fields before sending to server
       const sanitizedFields = fields.map(field => ({
         name: field.name || '',
         type: field.type || 'string',
@@ -64,23 +69,29 @@ export function SchemaEditor({
           field.exampleValues.filter(val => val !== '') : []
       }));
 
-      // Sanitize documents
       const sanitizedDocs = documents.map(doc => ({
         name: doc.name || '',
         content: doc.content || ''
       }));
 
-      // Send the request with ID in the body, not as a query parameter
-      const response = await fetch('/api/schema', {
-        method: 'PUT',
+      const requestData = {
+        name: schema.name.trim(),
+        description: schema.description?.trim() || '',
+        content: sanitizedFields,
+        docText: sanitizedDocs
+      };
+
+      if (!isNew) {
+        Object.assign(requestData, { id: schema.id });
+      }
+
+      const endpoint = '/api/schema';
+      const method = isNew ? 'POST' : 'PUT';
+
+      const response = await fetch(endpoint, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: schema.id, // Include ID in the body
-          name: schema.name.trim(),
-          description: schema.description?.trim() || '',
-          content: sanitizedFields,
-          docText: sanitizedDocs
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
@@ -88,25 +99,24 @@ export function SchemaEditor({
         let errorMessage;
         try {
           const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || 'Failed to update schema';
+          errorMessage = errorData.message || `Failed to ${isNew ? 'create' : 'update'} schema`;
         } catch (e) {
           errorMessage = `Server error: ${errorText.substring(0, 100)}`;
         }
         throw new Error(errorMessage);
       }
 
-      toast.success('Schema updated successfully');
+      toast.success(`Schema ${isNew ? 'created' : 'updated'} successfully`);
       router.push('/schema/manage');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to update schema');
-      console.error('Schema update error:', error);
+      toast.error(error instanceof Error ? error.message : `Failed to ${isNew ? 'create' : 'update'} schema`);
+      console.error('Schema operation error:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const addField = () => {
-    // Use explicit new object with default values
     setFields([...fields, { 
       name: '', 
       type: '', 
@@ -141,28 +151,46 @@ export function SchemaEditor({
 
   return (
     <div className="flex flex-col min-w-0 h-full pb-6">
-      {/* Header matching schema-manager style exactly */}
       <header className="flex bg-background py-1.5 items-center px-2 md:px-2 gap-2">
         <SidebarToggle />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleUpdateSchema}
-              disabled={isSubmitting}
-              variant="outline"
-              className="md:px-2 md:h-fit"
-            >
-              <Save size={16} />
-              <span className="ml-2 md:sr-only">Save</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent align="start">Save Changes</TooltipContent>
-        </Tooltip>
         
-        <h1 className="text-lg font-semibold mx-2 flex-1">Edit Database</h1>
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleUpdateSchema}
+                disabled={isSubmitting}
+                variant="outline"
+                className="md:px-2 md:h-fit"
+              >
+                <Save size={16} />
+                <span className="ml-2 md:sr-only">Save</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent align="start">Save Changes</TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleCancel}
+                disabled={isSubmitting}
+                variant="outline"
+                className="md:px-2 md:h-fit"
+              >
+                <X size={16} />
+                <span className="ml-2 md:sr-only">Cancel</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent align="start">Cancel</TooltipContent>
+          </Tooltip>
+        </div>
+        
+        <h1 className="text-lg font-semibold mx-2 flex-1">
+          {isNew ? 'Create Database' : 'Edit Database'}
+        </h1>
       </header>
 
-      {/* Content area with styling matching schema-manager */}
       <div className="flex-1 overflow-auto">
         <div className="mx-auto p-4 md:p-6 lg:p-8 max-w-screen-xl">
           <Card className="mb-6">
@@ -217,16 +245,14 @@ export function SchemaEditor({
                 </div>
               ) : (
                 <div className="border rounded-md overflow-hidden">
-                  {/* Updated table header with example values */}
                   <div className="grid grid-cols-[1fr,120px,1fr,1fr,40px] gap-2 bg-muted/50 p-2 border-b text-sm font-medium">
                     <div>Column Name</div>
                     <div>Type</div>
                     <div>Description</div>
                     <div>Example Values</div>
-                    <div></div> {/* Empty cell for the action button */}
+                    <div></div>
                   </div>
                   
-                  {/* Updated table rows with example values */}
                   <div className="divide-y">
                     {fields.map((field, index) => (
                       <div key={index} className="grid grid-cols-[1fr,120px,1fr,1fr,40px] gap-2 p-2 items-center">
@@ -239,7 +265,6 @@ export function SchemaEditor({
                           />
                         </div>
                         <div>
-                          {/* Changed from select to input */}
                           <Input
                             className="w-full"
                             placeholder="Type"
@@ -255,7 +280,6 @@ export function SchemaEditor({
                           />
                         </div>
                         <div>
-                          {/* New example values field */}
                           <Input
                             placeholder="e.g. value1, value2"
                             value={field.exampleValues?.join(', ') || ''}
@@ -326,9 +350,7 @@ export function SchemaEditor({
                   setIsSubmitting(true);
                   
                   try {
-                    // Handle different file types
                     if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-                      // For PDFs - use the server-side API
                       const formData = new FormData();
                       formData.append('file', file);
                       
@@ -350,7 +372,6 @@ export function SchemaEditor({
                       
                       toast.success(`Extracted text from ${file.name}`);
                     } else {
-                      // For text files - handle client-side as before
                       const text = await file.text();
                       setDocuments([...documents, { 
                         name: file.name, 
@@ -359,7 +380,6 @@ export function SchemaEditor({
                       toast.success(`Added ${file.name}`);
                     }
                     
-                    // Reset the input
                     e.target.value = '';
                   } catch (error) {
                     toast.error('Could not process file');
@@ -380,7 +400,7 @@ export function SchemaEditor({
                 <div className="border rounded-md overflow-hidden">
                   <div className="grid grid-cols-[1fr,auto] gap-2 bg-muted/50 p-2 border-b text-sm font-medium">
                     <div>Text documents</div>
-                    <div></div> {/* Empty cell for the action button */}
+                    <div></div>
                   </div>
                   <div className="divide-y">
                     {documents.map((doc, index) => (

@@ -63,7 +63,7 @@ function PureSchemaManager({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              onClick={() => setIsCreateDialogOpen(true)}
+              onClick={() => router.push('/schema/new')}
               variant="outline"
               className="md:px-2 md:h-fit"
             >
