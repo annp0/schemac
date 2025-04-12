@@ -160,9 +160,11 @@ export async function POST(request: Request) {
         schemaContext += `\n\nSchema Name: ${schema.name}\n\n`;
         schemaContext += `Schema Content: ${JSON.stringify(schema.content)}\n\n`;
         schemaContext += `Schema Description: ${schema.description}\n\n`;
-        schemaContext += `Schema DocText: ${schema.docText.join('\n')}\n\n`;
+        schemaContext += `Schema DocText: ${JSON.stringify(schema.docText)}\n\n`;
       }
     })
+
+    console.log('Schema Context:', schemaContext);
 
     const enhancedSystemPrompt = systemPrompt({
       selectedChatModel,

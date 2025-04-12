@@ -65,7 +65,7 @@ export function SidebarSchemas({ user }: { user: User | undefined }) {
 
   const handleEdit = (schemaId: string) => {
     setOpenMobile(false);
-    router.push(`/schema/${schemaId}/edit`);
+    router.push(`/schema/${schemaId}`);
   };
 
   if (!user) {

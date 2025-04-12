@@ -29,35 +29,33 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       <SidebarHeader>
         <SidebarMenu>
           <div className="flex flex-row justify-between items-center">
-            <Link
-              href="/"
+            <div className="flex flex-row items-center">
+              <Link
+                href="/"
+                onClick={() => {
+                  setOpenMobile(false);
+                }}
+                className="flex flex-row gap-3 items-center"
+              >
+                <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer flex items-center">
+                  <Image src="/images/logo.png" alt="Logo" className='dark:invert' width={25} height={25} />
+                  <span>Schemac</span>
+                </span>
+              </Link>
+              <span className="text-sm text-muted-foreground font-mono">v0.2</span>
+            </div>
+            <Button
+              variant="ghost"
+              type="button"
+              className="p-2 h-fit"
               onClick={() => {
                 setOpenMobile(false);
+                router.push('/');
+                router.refresh();
               }}
-              className="flex flex-row gap-3 items-center"
             >
-              <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer flex items-center">
-                <Image src="/images/logo.png" alt="Logo" className='dark:invert' width={25} height={25} />
-                Schemac
-              </span>
-            </Link>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  type="button"
-                  className="p-2 h-fit"
-                  onClick={() => {
-                    setOpenMobile(false);
-                    router.push('/');
-                    router.refresh();
-                  }}
-                >
-                  <PlusIcon />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent align="end">New Chat</TooltipContent>
-            </Tooltip>
+              <PlusIcon />
+            </Button>
           </div>
         </SidebarMenu>
       </SidebarHeader>
