@@ -170,6 +170,7 @@ export const userSchema = pgTable('UserSchema', {
     .notNull()
     .references(() => user.id),
   content: json('content').notNull(),
+  docText: json('documents'),
   createdAt: timestamp('createdAt').notNull(),
 });
 
@@ -180,6 +181,12 @@ export interface SchemaField {
   exampleValues?: string[];
 }
 
+export interface DocText {
+  name: string;
+  content: string;
+}
+
 export type UserSchema = InferSelectModel<typeof userSchema> & {
   content: SchemaField[];
+  docText: DocText[];
 };

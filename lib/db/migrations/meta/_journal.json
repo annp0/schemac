@@ -57,6 +57,20 @@
       "when": 1744336156241,
       "tag": "0007_furry_anthem",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1744400613016,
+      "tag": "0008_military_mac_gargan",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1744421608045,
+      "tag": "0009_tranquil_ink",
+      "breakpoints": true
     }
   ]
 }

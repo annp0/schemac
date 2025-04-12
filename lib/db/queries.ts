@@ -23,6 +23,7 @@ import {
   SchemaField,
   attachedText,
   type AttachedText,
+  DocText
 } from './schema';
 import { ArtifactKind } from '@/components/artifact';
 
@@ -419,11 +420,13 @@ export async function createSchema({
   description,
   userId,
   content,
+  docText,
 }: {
   name: string;
   description?: string;
   userId: string;
-  content: SchemaField[]; // JSON schema content
+  content: SchemaField[];
+  docText?: DocText;
 }) {
   try {
     return await db.insert(userSchema).values({
@@ -431,6 +434,7 @@ export async function createSchema({
       description,
       userId,
       content,
+      docText,
       createdAt: new Date(),
     });
   } catch (error) {
@@ -471,17 +475,20 @@ export async function updateSchema({
   name,
   description,
   content,
+  docText,
 }: {
   id: string;
   name?: string;
   description?: string;
   content?: SchemaField[];
+  docText?: DocText[];
 }) {
   try {
     const updates: Partial<UserSchema> = {};
     if (name) updates.name = name;
     if (description !== undefined) updates.description = description;
     if (content) updates.content = content;
+    if (docText !== undefined) updates.docText = docText;
 
     return await db.update(userSchema).set(updates).where(eq(userSchema.id, id));
   } catch (error) {
@@ -495,6 +502,24 @@ export async function deleteSchemaById({ id }: { id: string }) {
     return await db.delete(userSchema).where(eq(userSchema.id, id));
   } catch (error) {
     console.error('Failed to delete schema from database');
+    throw error;
+  }
+}
+
+export async function updateSchemaDocText({
+  id,
+  docText,
+}: {
+  id: string;
+  docText: DocText[];
+}) {
+  try {
+    return await db
+      .update(userSchema)
+      .set({ docText })
+      .where(eq(userSchema.id, id));
+  } catch (error) {
+    console.error('Failed to update schema documentation in database');
     throw error;
   }
 }

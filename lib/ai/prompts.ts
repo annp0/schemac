@@ -4,13 +4,19 @@ export const regularPrompt =
 export const systemPrompt = ({
   selectedChatModel,
   documentContent = '',
+  schemaContext = '',
 }: {
   selectedChatModel: string;
   documentContent?: string;
+  schemaContext?: string;
 }) => {
   let prompt = regularPrompt;
 
-  if (documentContent) {
+  if (schemaContext && schemaContext.length > 0) {
+    prompt += `\n\nThe user has shared the following schema context for their database:\n\n${schemaContext}\n\nPlease reference this context when answering questions about the schema / database.`;
+  }
+
+  if (documentContent && documentContent.length > 0) {
     prompt += `\n\nThe user has shared a document with the following content:\n\n${documentContent}\n\nPlease reference this content when answering questions about the document.`;
   }
 

@@ -14,6 +14,7 @@ import {
   saveMessages,
   updateOrCreateAttachedText,
   getAttachedTextByChatId,
+  getSchemaById,
 } from '@/lib/db/queries';
 import {
   generateUUID,
@@ -26,6 +27,7 @@ import { myProvider } from '@/lib/ai/providers';
 import { Document } from "langchain/document";
 import { TextLoader } from "langchain/document_loaders/fs/text";
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf'
+import { UserSchema } from '@/lib/db/schema';
 
 export const maxDuration = 60;
 
@@ -35,10 +37,12 @@ export async function POST(request: Request) {
       id,
       messages,
       selectedChatModel,
+      selectedSchemaIds,
     }: {
       id: string;
       messages: Array<UIMessage>;
       selectedChatModel: string;
+      selectedSchemaIds: Array<string>;
     } = await request.json();
 
     const session = await auth();
@@ -83,6 +87,7 @@ export async function POST(request: Request) {
     let documentContent = '';
 
     const newMessage = messages[messages.length - 1];
+
     if (newMessage.experimental_attachments && newMessage.experimental_attachments.length > 0) {
 
       const attachments = newMessage.experimental_attachments;
@@ -129,9 +134,40 @@ export async function POST(request: Request) {
       .map(text => text.content)
       .join('\n\n');
 
+    let schemaDetails: UserSchema[] = [];
+
+    if (selectedSchemaIds && selectedSchemaIds.length > 0) {
+      // Fetch schema details from the database
+      const rawSchemas = await Promise.all(
+        selectedSchemaIds.map(async (schemaId: string) => {
+          // Use your existing query function to get schema details
+          return await getSchemaById({ id: schemaId });
+        })
+      );
+
+      // Transform the raw schemas to match UserSchema type
+      schemaDetails = rawSchemas.map(schema => ({
+        ...schema,
+        content: Array.isArray(schema.content) ? schema.content : [],
+        docText: Array.isArray(schema.docText) ? schema.docText : []
+      })) as UserSchema[];
+    }
+
+    let schemaContext = '';
+
+    schemaDetails.forEach((schema) => {
+      if (schema.content && schema.content.length > 0) {
+        schemaContext += `\n\nSchema Name: ${schema.name}\n\n`;
+        schemaContext += `Schema Content: ${JSON.stringify(schema.content)}\n\n`;
+        schemaContext += `Schema Description: ${schema.description}\n\n`;
+        schemaContext += `Schema DocText: ${schema.docText.join('\n')}\n\n`;
+      }
+    })
+
     const enhancedSystemPrompt = systemPrompt({
       selectedChatModel,
-      documentContent: completeDocumentContent // Pass the extracted content to your system prompt
+      documentContent: completeDocumentContent,
+      schemaContext: schemaContext,
     });
 
     return createDataStreamResponse({

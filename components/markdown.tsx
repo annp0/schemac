@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import React, { memo } from 'react';
+import React, { memo, Children, isValidElement, cloneElement } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './code-block';
@@ -7,7 +7,26 @@ import { CodeBlock } from './code-block';
 const components: Partial<Components> = {
   // @ts-expect-error
   code: CodeBlock,
-  pre: ({ children }) => <>{children}</>,
+  pre: ({ children }) => {
+    // Clone the children elements and add isPre prop
+    const childrenWithProps = Children.map(children, child => {
+      // Only add props to React elements
+      if (isValidElement(child)) {
+        // Use type assertion to avoid TypeScript error
+        return cloneElement(child, { isPre: true } as React.ComponentProps<any>);
+      }
+      return child;
+    });
+    
+    return <>{childrenWithProps}</>;
+  },
+  p: ({ node, children, ...props }) => {
+    return (
+      <div{...props}>
+        {children}
+      </div>
+    );
+  },
   ol: ({ node, children, ...props }) => {
     return (
       <ol className="list-decimal list-outside ml-4" {...props}>

@@ -23,6 +23,7 @@ import { Textarea } from './ui/textarea';
 import { SuggestedActions } from './suggested-actions';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
+import { useSchemaSelection } from './schema-provider';
 
 function PureMultimodalInput({
   chatId,
@@ -52,6 +53,7 @@ function PureMultimodalInput({
   className?: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { selectedSchemaIds } = useSchemaSelection();
   const { width } = useWindowSize();
 
   useEffect(() => {
@@ -106,8 +108,11 @@ function PureMultimodalInput({
   const submitForm = useCallback(() => {
     window.history.replaceState({}, '', `/chat/${chatId}`);
 
+    console.log('selectedSchemaIds', selectedSchemaIds);
+
     handleSubmit(undefined, {
       experimental_attachments: attachments,
+      body: {selectedSchemaIds: selectedSchemaIds},
     });
 
     setAttachments([]);
@@ -124,6 +129,7 @@ function PureMultimodalInput({
     setLocalStorageInput,
     width,
     chatId,
+    selectedSchemaIds,
   ]);
 
   const uploadFile = async (file: File) => {

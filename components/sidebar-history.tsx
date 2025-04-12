@@ -163,6 +163,9 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   if (isLoading) {
     return (
       <SidebarGroup>
+        <div className="px-2 text-sm py-1">
+          History
+        </div>
         <div className="px-2 py-1 text-xs text-sidebar-foreground/50">
           Today
         </div>
@@ -204,6 +207,10 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   return (
     <>
       <SidebarGroup>
+        <div className='h-[2] w-full bg-muted rounded-s'></div>
+        <div className="px-2 text-sm py-1">
+          History
+        </div>
         <SidebarGroupContent>
           <SidebarMenu>
             {paginatedChatHistories &&

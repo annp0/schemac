@@ -2,19 +2,19 @@
 
 interface CodeBlockProps {
   node: any;
-  inline: boolean;
   className: string;
   children: any;
+  isPre?: boolean;
 }
 
 export function CodeBlock({
   node,
-  inline,
   className,
   children,
+  isPre,
   ...props
 }: CodeBlockProps) {
-  if (!inline) {
+  if (isPre) {
     return (
       <div className="not-prose flex flex-col">
         <pre
