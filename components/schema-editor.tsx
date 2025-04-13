@@ -154,38 +154,6 @@ export function SchemaEditor({
       <header className="flex bg-background py-1.5 items-center px-2 md:px-2 gap-2">
         <SidebarToggle />
         
-        <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleUpdateSchema}
-                disabled={isSubmitting}
-                variant="outline"
-                className="md:px-2 md:h-fit"
-              >
-                <Save size={16} />
-                <span className="ml-2 md:sr-only">Save</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent align="start">Save Changes</TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleCancel}
-                disabled={isSubmitting}
-                variant="outline"
-                className="md:px-2 md:h-fit"
-              >
-                <X size={16} />
-                <span className="ml-2 md:sr-only">Cancel</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent align="start">Cancel</TooltipContent>
-          </Tooltip>
-        </div>
-        
         <h1 className="text-lg font-semibold mx-2 flex-1">
           {isNew ? 'Create Database' : 'Edit Database'}
         </h1>
@@ -229,7 +197,7 @@ export function SchemaEditor({
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Table className="size-5" />
-                  Database Columns
+                  Columns
                 </CardTitle>
                 <CardDescription>Define the structure of your database</CardDescription>
               </div>
@@ -245,7 +213,7 @@ export function SchemaEditor({
                 </div>
               ) : (
                 <div className="border rounded-md overflow-hidden">
-                  <div className="grid grid-cols-[1fr,120px,1fr,1fr,40px] gap-2 bg-muted/50 p-2 border-b text-sm font-medium">
+                  <div className="grid grid-cols-[1fr,1fr,1fr,1fr,40px] gap-2 bg-muted/50 p-2 border-b text-sm font-medium">
                     <div>Column Name</div>
                     <div>Type</div>
                     <div>Description</div>
@@ -255,7 +223,7 @@ export function SchemaEditor({
                   
                   <div className="divide-y">
                     {fields.map((field, index) => (
-                      <div key={index} className="grid grid-cols-[1fr,120px,1fr,1fr,40px] gap-2 p-2 items-center">
+                      <div key={index} className="grid grid-cols-[1fr,1fr,1fr,1fr,40px] gap-2 p-2 items-center">
                         <div>
                           <Input
                             className="w-full"
@@ -309,7 +277,7 @@ export function SchemaEditor({
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="mb-10 md:mb-8">
             <CardHeader className="px-4 py-3 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
@@ -432,12 +400,28 @@ export function SchemaEditor({
             </CardContent>
             <CardFooter className="px-4 py-2">
               <div className="text-xs text-muted-foreground">
-                Documents help the AI understand the context of your database. Supported formats: .txt, .md, .csv, .pdf
+                Related Documents (Data Dictionaries, Documentation, etc.) help the AI understand the context of your database. Supported formats: .txt, .md, .csv, .pdf
               </div>
             </CardFooter>
           </Card>
         </div>
       </div>
+      
+      <footer className="px-4 flex justify-end gap-2 z-10">
+        <Button
+          onClick={handleCancel}
+          disabled={isSubmitting}
+          variant="outline"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleUpdateSchema}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Saving...' : isNew ? 'Create Database' : 'Save Changes'}
+        </Button>
+      </footer>
     </div>
   );
 }
