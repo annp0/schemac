@@ -3,11 +3,9 @@ import { auth } from '@/app/(auth)/auth';
 import { getSchemaById } from '@/lib/db/queries';
 import { SchemaEditor } from '@/components/schema-editor';
 
-export default async function SchemaPage({ params }) {
-  // Authentication check
-
-  const { id } = await params;
-
+export default async function SchemaPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const { id } = params;
   const session = await auth();
   
   if (!session || !session.user) {
@@ -15,16 +13,23 @@ export default async function SchemaPage({ params }) {
   }
   
   // Fetch the schema by ID
-  const schema = await getSchemaById({ id: id });
+  const rawSchema = await getSchemaById({ id: id });
   
-  if (!schema) {
+  if (!rawSchema) {
     return notFound();
   }
   
   // Authorization check (ensure the user owns this schema)
-  if (schema.userId !== session.user.id) {
+  if (rawSchema.userId !== session.user.id) {
     return notFound();
   }
+
+  // Parse content and docText to match the UserSchema type
+  const schema = {
+    ...rawSchema,
+    content: Array.isArray(rawSchema.content) ? rawSchema.content : [],
+    docText: Array.isArray(rawSchema.docText) ? rawSchema.docText : []
+  };
 
   return <SchemaEditor initialSchema={schema} user={session.user} />;
 }

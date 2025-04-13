@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PlusIcon, Database, PencilIcon, TrashIcon } from 'lucide-react';
@@ -15,19 +15,18 @@ import { User } from 'next-auth';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { useSidebar } from './ui/sidebar';
 import { useWindowSize } from 'usehooks-ts';
-import { memo } from 'react';
+import { useSchemaData } from '@/hooks/use-schema-data';
 
 function PureSchemaManager({
-  initialSchemas,
   user
 }: {
-  initialSchemas: UserSchema[];
   user: User;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
   const { width: windowWidth } = useWindowSize();
-  const [schemas, setSchemas] = useState<UserSchema[]>(initialSchemas);
+  const { schemas, isLoading, mutate } = useSchemaData();
+
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [currentSchemaId, setCurrentSchemaId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +44,12 @@ function PureSchemaManager({
         throw new Error(error.message || 'Failed to delete schema');
       }
 
-      setSchemas(schemas.filter(schema => schema.id !== id));
+      // Fix the type error by explicitly typing the parameter
+      mutate(
+        schemas.filter((schema: UserSchema) => schema.id !== id),
+        false
+      );
+
       setDeleteConfirmId(null);
       toast.success('Schema deleted successfully');
     } catch (error) {
@@ -80,9 +84,13 @@ function PureSchemaManager({
       {/* Content area with max-width matching chat */}
       <div className="flex-1 overflow-auto">
         <div className="mx-auto p-4 md:p-6 lg:p-8 max-w-screen-xl">
-          {schemas.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full size-8 border-b-2 border-primary"></div>
+            </div>
+          ) : schemas.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-              {schemas.map((schema) => (
+              {schemas.map((schema: UserSchema) => (
                 <Card key={schema.id} className="overflow-hidden bg-background shadow hover:shadow-md transition-shadow border">
                   <CardHeader className="px-4 pt-3 pb-0 flex flex-row items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -135,7 +143,7 @@ function PureSchemaManager({
               <p className="text-muted-foreground mb-4 text-center max-w-md">
                 Create your first database to help your AI assistant work with structured data
               </p>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Button onClick={() => router.push('/schema/new')} variant="outline">
                 <PlusIcon className="mr-2 size-4" />
                 Create Database
               </Button>
@@ -176,8 +184,7 @@ function PureSchemaManager({
 }
 
 export const SchemaManager = memo(PureSchemaManager, (prevProps, nextProps) => {
-  return prevProps.user?.id === nextProps.user?.id &&
-         JSON.stringify(prevProps.initialSchemas) === JSON.stringify(nextProps.initialSchemas);
+  return prevProps.user?.id === nextProps.user?.id;
 });
 
 function SchemaContentPreview({ schema }: { schema: UserSchema }) {
@@ -196,7 +203,7 @@ function SchemaContentPreview({ schema }: { schema: UserSchema }) {
   return (
     <div className="mt-2 space-y-3">
       <div className="flex flex-wrap gap-1.5">
-        {fields.map((field: any, index: number) => (
+        {fields.map((field: { name: string; type: string }, index: number) => (
           <div 
             key={index} 
             className="bg-primary/10 border border-primary/30 rounded px-1.5 py-0.5 text-xs"
@@ -221,7 +228,7 @@ function SchemaContentPreview({ schema }: { schema: UserSchema }) {
             <span className="font-medium">Documents</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {schema.docText.slice(0, 4).map((doc: any, index: number) => (
+            {schema.docText.slice(0, 4).map((doc: { name: string; content: string }, index: number) => (
               <div 
                 key={index} 
                 className="bg-primary/10 border border-primary/30 rounded px-1.5 py-0.5 text-xs truncate max-w-[80px]"

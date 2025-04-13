@@ -15,7 +15,7 @@ export default async function NewSchemaPage() {
     id: '', // Will be generated on save
     name: '',
     description: '',
-    userId: session.user.id,
+    userId: session.user.id!, // Add non-null assertion
     content: [],
     docText: [],
     createdAt: new Date()

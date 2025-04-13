@@ -2,8 +2,9 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import type { User } from 'next-auth';
-import { useState } from 'react';
 import { toast } from 'sonner';
+// Add import for the shared hook
+import { useSchemaData } from '@/hooks/use-schema-data';
 import {
   FileIcon,
   PlusIcon,
@@ -21,8 +22,6 @@ import type { UserSchema } from '@/lib/db/schema';
 import { SettingsIcon, Database } from 'lucide-react';
 import { SchemaItem } from './schema-item';
 import { useSchemaSelection } from './schema-provider';
-import useSWR from 'swr';
-import { fetcher } from '@/lib/utils';
 
 export function SidebarSchemas({ user }: { user: User | undefined }) {
   const router = useRouter();
@@ -30,19 +29,8 @@ export function SidebarSchemas({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
   const { toggleSchemaSelection, isSchemaSelected } = useSchemaSelection();
   
-  // Replace useEffect+fetch with useSWR
-  const { 
-    data: schemas = [], 
-    isLoading,
-    mutate 
-  } = useSWR<UserSchema[]>(
-    user ? '/api/schema' : null,
-    fetcher,
-    {
-      fallbackData: [],
-      revalidateOnMount: true
-    }
-  );
+  // Replace direct useSWR with shared hook
+  const { schemas, isLoading, mutate } = useSchemaData();
 
   const handleDelete = async (schemaId: string) => {
     const deletePromise = fetch(`/api/schema?id=${schemaId}`, {
@@ -52,10 +40,10 @@ export function SidebarSchemas({ user }: { user: User | undefined }) {
     toast.promise(deletePromise, {
       loading: 'Deleting schema...',
       success: () => {
-        // Use mutate to update the cache instead of setState
+        // This now uses the shared cache
         mutate(
           schemas.filter((schema) => schema.id !== schemaId),
-          false // Set to false to avoid revalidation after mutation
+          false
         );
         return 'Schema deleted successfully';
       },
