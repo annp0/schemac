@@ -295,11 +295,9 @@ export function SchemaEditor({
                         size="sm" 
                         type="button" 
                         onClick={() => document.getElementById('document-upload')?.click()}
-                        disabled={isSubmitting}
                       >
                         <Plus className="size-4 mr-1" />
                         Upload Document
-                        {isSubmitting && <span className="ml-2 animate-spin">⏳</span>}
                       </Button>
                     </div>
                   </label>
