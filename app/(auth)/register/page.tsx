@@ -10,6 +10,9 @@ import { SubmitButton } from '@/components/submit-button';
 import { register, type RegisterActionState } from '../actions';
 import { toast } from '@/components/toast';
 
+// Set this to false to block registrations
+const REGISTRATIONS_ENABLED = false;
+
 export default function Page() {
   const router = useRouter();
 
@@ -42,6 +45,14 @@ export default function Page() {
   }, [state]);
 
   const handleSubmit = (formData: FormData) => {
+    if (!REGISTRATIONS_ENABLED) {
+      toast({ 
+        type: 'error', 
+        description: 'Registrations are currently disabled!'
+      });
+      return;
+    }
+    
     setEmail(formData.get('email') as string);
     formAction(formData);
   };
@@ -51,23 +62,44 @@ export default function Page() {
       <div className="w-full max-w-md overflow-hidden rounded-2xl gap-12 flex flex-col">
         <div className="flex flex-col items-center justify-center gap-2 px-4 text-center sm:px-16">
           <h3 className="text-xl font-semibold dark:text-zinc-50">Sign Up</h3>
-          <p className="text-sm text-gray-500 dark:text-zinc-400">
-            Create an account with your email and password
-          </p>
+          {REGISTRATIONS_ENABLED ? (
+            <p className="text-sm text-gray-500 dark:text-zinc-400">
+              Create an account with your email and password
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-zinc-400">
+              Registrations are currently disabled. Please check back later.
+            </p>
+          )}
         </div>
-        <AuthForm action={handleSubmit} defaultEmail={email}>
-          <SubmitButton isSuccessful={isSuccessful}>Sign Up</SubmitButton>
-          <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
-            {'Already have an account? '}
-            <Link
-              href="/login"
-              className="font-semibold text-gray-800 hover:underline dark:text-zinc-200"
-            >
-              Sign in
-            </Link>
-            {' instead.'}
-          </p>
-        </AuthForm>
+        
+        {REGISTRATIONS_ENABLED ? (
+          <AuthForm action={handleSubmit} defaultEmail={email}>
+            <SubmitButton isSuccessful={isSuccessful}>Sign Up</SubmitButton>
+            <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
+              {'Already have an account? '}
+              <Link
+                href="/login"
+                className="font-semibold text-gray-800 hover:underline dark:text-zinc-200"
+              >
+                Sign in
+              </Link>
+              {' instead.'}
+            </p>
+          </AuthForm>
+        ) : (
+          <div className="px-4 text-center sm:px-16">
+            <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
+              {'Already have an account? '}
+              <Link
+                href="/login"
+                className="font-semibold text-gray-800 hover:underline dark:text-zinc-200"
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

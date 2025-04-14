@@ -1,8 +1,8 @@
 import { compare } from 'bcrypt-ts';
 import NextAuth, { type User, type Session } from 'next-auth';
+import GitHub from "next-auth/providers/github"
 import Credentials from 'next-auth/providers/credentials';
-
-import { getUser } from '@/lib/db/queries';
+import { createUser, getUser } from '@/lib/db/queries';
 
 import { authConfig } from './auth.config';
 
@@ -29,8 +29,45 @@ export const {
         return users[0] as any;
       },
     }),
+    GitHub,
   ],
   callbacks: {
+
+    async signIn({ user, account }) {
+      // For credentials provider, continue with existing logic
+      if (account?.provider === 'credentials') {
+        return true;
+      }
+
+      // For GitHub authentication
+      if (account?.provider === 'github') {
+        try {
+          // Check if user with this email already exists in your DB
+          if (user.email) {
+            const [existingUser] = await getUser(user.email);
+
+            if (existingUser) {
+              user.id = existingUser.id;
+            }
+
+            if (!existingUser) {
+              // Create new user in your database using GitHub data
+              // No password needed for OAuth-created accounts
+              await createUser(user.email, Math.random().toString(36).slice(-8));
+              const [newUser] = await getUser(user.email);
+              user.id = newUser.id;
+            }
+          }
+          return true;
+        } catch (error) {
+          console.error('GitHub auth error:', error);
+          return false;
+        }
+      }
+
+      return true;
+    },
+
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

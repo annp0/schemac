@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useActionState, useEffect, useState } from 'react';
 import { toast } from '@/components/toast';
+import { githubSignIn } from '@/app/(auth)/github-auth-action';
+import Image from 'next/image';
 
 import { AuthForm } from '@/components/auth-form';
 import { SubmitButton } from '@/components/submit-button';
@@ -37,6 +39,11 @@ export default function Page() {
     } else if (state.status === 'success') {
       setIsSuccessful(true);
       router.refresh();
+    } else if (state.status === 'disabled') {
+      toast({ 
+        type: 'error', 
+        description: 'Registrations are currently disabled!'
+      });
     }
   }, [state.status]);
 
@@ -46,25 +53,46 @@ export default function Page() {
   };
 
   return (
-    <div className="flex h-dvh w-screen items-start pt-12 md:pt-0 md:items-center justify-center bg-background">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl flex flex-col gap-12">
-        <div className="flex flex-col items-center justify-center gap-2 px-4 text-center sm:px-16">
-          <h3 className="text-xl font-semibold dark:text-zinc-50">Sign In</h3>
-          <p className="text-sm text-gray-500 dark:text-zinc-400">
+    <div className="flex h-dvh w-screen items-start justify-center bg-background pt-12 md:items-center md:pt-0">
+      <div className="w-full max-w-md flex flex-col gap-8 rounded-lg border border-border bg-card p-6 shadow-sm">
+        <div className="flex flex-col items-center justify-center gap-3 text-center">
+          <Image
+            src="/images/logo.png"
+            alt="Logo"
+            className="dark:invert"
+            width={60}
+            height={60}
+          />
+          <h3 className="text-xl font-semibold text-foreground">Schemac - Sign In</h3>
+          
+          <p className="text-sm text-muted-foreground">
             Use your email and password to sign in
           </p>
+          
+          <div className="mt-4 w-full sm:px-16">
+            <p className="mb-3 text-sm text-muted-foreground">
+              Sign in with third-party providers
+            </p>
+            <button
+              type="button"
+              onClick={() => githubSignIn()}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+            >
+              Sign in with GitHub
+            </button>
+          </div>
         </div>
+        
+        <div className="relative flex items-center justify-center">
+          <span className="absolute inset-x-0 h-px bg-border"></span>
+          <span className="relative bg-card px-2 text-xs text-muted-foreground">OR</span>
+        </div>
+        
         <AuthForm action={handleSubmit} defaultEmail={email}>
           <SubmitButton isSuccessful={isSuccessful}>Sign in</SubmitButton>
-          <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
-            {"Don't have an account? "}
-            <Link
-              href="/register"
-              className="font-semibold text-gray-800 hover:underline dark:text-zinc-200"
-            >
-              Sign up
-            </Link>
-            {' for free.'}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Registration via Email and Password is paused due to spam accounts and delivery issues
+            with verification emails. Please use third party providers to sign in.
           </p>
         </AuthForm>
       </div>

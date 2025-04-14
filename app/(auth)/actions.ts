@@ -6,13 +6,15 @@ import { createUser, getUser } from '@/lib/db/queries';
 
 import { signIn } from './auth';
 
+const REGISTRATIONS_ENABLED = false;
+
 const authFormSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 });
 
 export interface LoginActionState {
-  status: 'idle' | 'in_progress' | 'success' | 'failed' | 'invalid_data';
+  status: 'idle' | 'in_progress' | 'success' | 'failed' | 'invalid_data' | 'disabled';
 }
 
 export const login = async (
@@ -43,12 +45,13 @@ export const login = async (
 
 export interface RegisterActionState {
   status:
-    | 'idle'
-    | 'in_progress'
-    | 'success'
-    | 'failed'
-    | 'user_exists'
-    | 'invalid_data';
+  | 'idle'
+  | 'in_progress'
+  | 'success'
+  | 'failed'
+  | 'user_exists'
+  | 'invalid_data'
+  | 'disabled';
 }
 
 export const register = async (
@@ -56,6 +59,12 @@ export const register = async (
   formData: FormData,
 ): Promise<RegisterActionState> => {
   try {
+    if (!REGISTRATIONS_ENABLED) {
+      return {
+        status: 'disabled',
+      };
+    }
+
     const validatedData = authFormSchema.parse({
       email: formData.get('email'),
       password: formData.get('password'),
