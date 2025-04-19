@@ -87,6 +87,8 @@ export async function PUT(request: Request) {
       return new Response('Schema ID is required', { status: 400 });
     }
 
+    console.log("Here's the ID:", id);
+
     await updateSchema({
       id,
       name,

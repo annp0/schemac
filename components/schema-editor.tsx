@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Database, Save, Trash, Plus, Table, File, X } from 'lucide-react';
+import { Database, Save, Trash, Plus, Table, File, X, Code } from 'lucide-react';
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { useSidebar } from './ui/sidebar';
 import { useWindowSize } from 'usehooks-ts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 interface SchemaField {
   name: string;
@@ -47,12 +48,64 @@ export function SchemaEditor({
   const [documents, setDocuments] = useState<DocText[]>(
     Array.isArray(initialSchema.docText) ? initialSchema.docText : []
   );
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [jsonEditorContent, setJsonEditorContent] = useState<string>(
+    JSON.stringify(fields, null, 2)
+  );
+  const [editMode, setEditMode] = useState<'form' | 'json'>('form');
 
   const handleCancel = useCallback(() => {
     router.push('/schema/manage');
   }, [router]);
 
+  const updateJsonFromForm = useCallback(() => {
+    setJsonEditorContent(JSON.stringify(fields, null, 2));
+    setJsonError(null);
+  }, [fields]);
+
+  const updateFormFromJson = useCallback(() => {
+    try {
+      const parsed = JSON.parse(jsonEditorContent);
+
+      if (!Array.isArray(parsed)) {
+        throw new Error('JSON must be an array of column definitions');
+      }
+
+      setFields(parsed.map(field => ({
+        name: field.name || '',
+        type: field.type || '',
+        description: field.description || '',
+        exampleValues: Array.isArray(field.exampleValues) ? field.exampleValues : []
+      })));
+
+      setJsonError(null);
+    } catch (error) {
+      setJsonError(error instanceof Error ? error.message : 'Invalid JSON format');
+      return false;
+    }
+    return true;
+  }, [jsonEditorContent]);
+
+  const handleTabChange = (value: string) => {
+    if (value === 'json' && editMode === 'form') {
+      updateJsonFromForm();
+    } else if (value === 'form' && editMode === 'json') {
+      if (!updateFormFromJson()) {
+        toast.error('Cannot switch to form view: Invalid JSON format');
+        return;
+      }
+    }
+    setEditMode(value as 'form' | 'json');
+  };
+
   const handleUpdateSchema = async () => {
+    if (editMode === 'json') {
+      if (!updateFormFromJson()) {
+        toast.error('Invalid JSON format. Please fix before saving.');
+        return;
+      }
+    }
+
     if (!schema.name.trim()) {
       toast.error('Schema name is required');
       return;
@@ -161,6 +214,7 @@ export function SchemaEditor({
 
       <div className="flex-1 overflow-auto">
         <div className="mx-auto p-4 md:p-6 lg:p-8 max-w-screen-xl">
+          {/* Database Details Card - Always visible */}
           <Card className="mb-6">
             <CardHeader className="px-4 py-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -192,91 +246,136 @@ export function SchemaEditor({
             </CardContent>
           </Card>
 
-          <Card className="mb-6">
-            <CardHeader className="px-4 py-3 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Table className="size-5" />
-                  Columns
-                </CardTitle>
-                <CardDescription>Define the structure of your database</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={addField}>
-                <Plus className="size-4 mr-1" />
-                Add Column
-              </Button>
-            </CardHeader>
-            <CardContent className="px-4 py-2">
-              {fields.length === 0 ? (
-                <div className="text-center py-3 text-sm text-muted-foreground">
-                  No columns defined. Add columns to define your database structure.
+          {/* Database Columns Card - With Tabs */}
+          <Tabs value={editMode} onValueChange={handleTabChange} className="mb-6">
+            <Card>
+              <CardHeader className="px-4 py-3 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Table className="size-5" />
+                    Columns
+                  </CardTitle>
+                  <CardDescription>Define the structure of your database</CardDescription>
                 </div>
-              ) : (
-                <div className="border rounded-md overflow-hidden">
-                  <div className="grid grid-cols-[1fr,1fr,1fr,1fr,40px] gap-2 bg-muted/50 p-2 border-b text-sm font-medium">
-                    <div>Column Name</div>
-                    <div>Type</div>
-                    <div>Description</div>
-                    <div>Example Values</div>
-                    <div></div>
-                  </div>
-                  
-                  <div className="divide-y">
-                    {fields.map((field, index) => (
-                      <div key={index} className="grid grid-cols-[1fr,1fr,1fr,1fr,40px] gap-2 p-2 items-center">
-                        <div>
-                          <Input
-                            className="w-full"
-                            placeholder="Column name"
-                            value={field.name}
-                            onChange={(e) => updateField(index, { name: e.target.value })}
-                          />
+                <div className="flex items-center gap-2">
+                  <TabsList>
+                    <TabsTrigger value="form" className="flex items-center gap-1">
+                      <Table className="size-4" />
+                      Form View
+                    </TabsTrigger>
+                    <TabsTrigger value="json" className="flex items-center gap-1">
+                      <Code className="size-4" />
+                      JSON View
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="px-4 py-2">
+                <TabsContent value="form" className="mt-0">
+                  <div className="border rounded-md overflow-hidden">
+                    {/* Fixed header - always visible */}
+                    <div className="grid grid-cols-[1fr,1fr,1fr,1fr,40px] gap-2 bg-muted/50 p-2 border-b text-sm font-medium sticky top-0 z-10">
+                      <div>Column Name</div>
+                      <div>Type</div>
+                      <div>Description</div>
+                      <div>Example Values</div>
+                      <div></div>
+                    </div>
+                    
+                    {/* Scrollable content area with max height */}
+                    <div className="divide-y max-h-[400px] overflow-y-auto">
+                      {fields.length === 0 ? (
+                        <div className="grid grid-cols-[1fr] p-2 text-center text-sm text-muted-foreground">
+                          No columns defined. Add columns using the button below.
                         </div>
-                        <div>
-                          <Input
-                            className="w-full"
-                            placeholder="Type"
-                            value={field.type}
-                            onChange={(e) => updateField(index, { type: e.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <Input
-                            placeholder="Description (optional)"
-                            value={field.description || ''}
-                            onChange={(e) => updateField(index, { description: e.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <Input
-                            placeholder="e.g. value1, value2"
-                            value={field.exampleValues?.join(', ') || ''}
-                            onChange={(e) => {
-                              const examples = e.target.value
-                                ? e.target.value.split(',').map(val => val.trim())
-                                : [];
-                              updateField(index, { exampleValues: examples });
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-center">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="text-destructive size-8"
-                            onClick={() => removeField(index)}
-                          >
-                            <Trash className="size-4" />
-                          </Button>
-                        </div>
+                      ) : (
+                        fields.map((field, index) => (
+                          <div key={index} className="grid grid-cols-[1fr,1fr,1fr,1fr,40px] gap-2 p-2 items-center">
+                            {/* Existing field input elements */}
+                            <div>
+                              <Input
+                                className="w-full"
+                                placeholder="Column name"
+                                value={field.name}
+                                onChange={(e) => updateField(index, { name: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                className="w-full"
+                                placeholder="Type"
+                                value={field.type}
+                                onChange={(e) => updateField(index, { type: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                placeholder="Description (optional)"
+                                value={field.description || ''}
+                                onChange={(e) => updateField(index, { description: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                placeholder="e.g. value1, value2"
+                                value={field.exampleValues?.join(', ') || ''}
+                                onChange={(e) => {
+                                  const examples = e.target.value
+                                    ? e.target.value.split(',').map(val => val.trim())
+                                    : [];
+                                  updateField(index, { exampleValues: examples });
+                                }}
+                              />
+                            </div>
+                            <div className="flex justify-center">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="text-destructive size-8"
+                                onClick={() => removeField(index)}
+                              >
+                                <Trash className="size-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      
+                      {/* Add Column button - always visible as the last row */}
+                      <div className="grid grid-cols-[1fr] p-2 border-t">
+                        <Button 
+                          variant="ghost" 
+                          onClick={addField}
+                          className="w-full flex items-center justify-center text-muted-foreground hover:text-foreground"
+                        >
+                          <Plus className="size-4 mr-1" />
+                          Add Column
+                        </Button>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </TabsContent>
+                
+                <TabsContent value="json" className="mt-0">
+                  <Textarea
+                    value={jsonEditorContent}
+                    onChange={(e) => setJsonEditorContent(e.target.value)}
+                    rows={10}
+                    className="font-mono text-sm"
+                  />
+                  {jsonError && (
+                    <div className="text-destructive text-sm mt-2">{jsonError}</div>
+                  )}
+                  <div className="text-xs text-muted-foreground mt-2">
+                    JSON should be an array of column definitions with name, type, description, and exampleValues.
+                  </div>
+                </TabsContent>
+              </CardContent>
+            </Card>
+          </Tabs>
 
+          {/* Documents Card - Always visible */}
           <Card className="mb-10 md:mb-8">
             <CardHeader className="px-4 py-3 flex flex-row items-center justify-between">
               <div>
