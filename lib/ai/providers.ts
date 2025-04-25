@@ -29,12 +29,12 @@ export const myProvider = isTestEnvironment
   })
   : customProvider({
     languageModels: {
-      'chat-model': azure('DeepSeek-V3'),
+      'chat-model': azure('DeepSeek-V3-0324'),
       'chat-model-reasoning': wrapLanguageModel({
         model: azure('DeepSeek-R1'),
         middleware: extractReasoningMiddleware({ tagName: 'think' }),
       }),
-      'title-model': azure('DeepSeek-V3'),
-      'artifact-model': azure('DeepSeek-V3'),
+      'title-model': azure('DeepSeek-V3-0324'),
+      'artifact-model': azure('DeepSeek-V3-0324'),
     },
   });
