@@ -51,7 +51,7 @@ const PureSchemaItem = ({
             {isSelected && <CheckIcon size={16} />}
           </div>
           <Database className="mr-2" size={16} />
-          <span className="truncate">{schema.name}</span>
+          <span className="truncate w-60">{schema.name}</span>
         </div>
       </SidebarMenuButton>
 
