@@ -93,9 +93,9 @@ function PureSchemaManager({
               {schemas.map((schema: UserSchema) => (
                 <Card key={schema.id} className="overflow-hidden bg-background shadow hover:shadow-md transition-shadow border">
                   <CardHeader className="px-4 pt-3 pb-0 flex flex-row items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Database className="size-5 text-primary" />
-                      <CardTitle className="text-base">{schema.name}</CardTitle>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <Database className="size-5 text-primary flex-shrink-0" />
+                      <CardTitle className="text-base truncate max-w-[12rem]">{schema.name}</CardTitle>
                     </div>
                     <div className="flex gap-2">
                       <Button

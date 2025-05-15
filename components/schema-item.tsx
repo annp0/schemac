@@ -46,12 +46,12 @@ const PureSchemaItem = ({
           onSelect(schema.id, !isSelected);
         }}
       >
-        <div className="flex items-center w-full">
-          <div className={`size-5 mr-1 flex items-center justify-center ${isSelected ? 'text-primary' : 'text-transparent'}`}>
+        <div className="flex items-center w-full min-w-0">
+          <div className="size-5 mr-1 flex-shrink-0">
             {isSelected && <CheckIcon size={16} />}
           </div>
-          <Database className="mr-2" size={16} />
-          <span className="truncate w-60">{schema.name}</span>
+          <Database className="mr-2 flex-shrink-0" size={16} />
+          <span className="truncate max-w-[10rem]">{schema.name}</span>
         </div>
       </SidebarMenuButton>
 

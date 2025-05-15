@@ -156,15 +156,14 @@ export async function POST(request: Request) {
     let schemaContext = '';
 
     schemaDetails.forEach((schema) => {
-      if (schema.content && schema.content.length > 0) {
-        schemaContext += `\n\nSchema Name: ${schema.name}\n\n`;
-        schemaContext += `Schema Content: ${JSON.stringify(schema.content)}\n\n`;
-        schemaContext += `Schema Description: ${schema.description}\n\n`;
-        schemaContext += `Schema DocText: ${JSON.stringify(schema.docText)}\n\n`;
-      }
+      schemaContext += `\n\nSchema Name: ${schema.name}\n\n`;
+      schemaContext += `Schema Content: ${JSON.stringify(schema.content)}\n\n`;
+      schemaContext += `Schema Description: ${schema.description}\n\n`;
+      schemaContext += `Schema DocText: ${JSON.stringify(schema.docText)}\n\n`;
     })
 
-    console.log('Schema Context:', schemaContext);
+    //console.log('Schema Context:', schemaContext);
+    //console.log('WHAT????!!!')
 
     const enhancedSystemPrompt = systemPrompt({
       selectedChatModel,
